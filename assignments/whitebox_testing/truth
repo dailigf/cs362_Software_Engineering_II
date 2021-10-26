@@ -1,0 +1,19 @@
+val < 150	val > 100	outcome		Condition
+T		T		T		C1
+T		F		F		C2
+F		T		F		C3
+F		F		F		C3
+
+val * 5 < 361	val / 2 < 24	outcome		Condition
+T		T		T		C4
+T		F		F		C5	
+F		T		F		C6
+F		F		F		C6
+
+val == 6	outcome		Condition
+T		T		C7
+F		F		C8
+
+val > 75  or   val / 8 < 10	outcome		Condition
+T		T		T		C9
+T		F		T		C1
