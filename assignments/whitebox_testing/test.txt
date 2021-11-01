@@ -1,0 +1,13 @@
+#Randomly Select Credit Card type select a random 
+
+#50% of selecting edge case with prefix for credit card type
+	#If no edge case => select correct prefix
+	#If edge case=> Randomly select an edge case
+
+#Set expected for Edge case
+	#if prefix is corect => true
+	#else => false
+
+#50% chanse selecting edge case for length
+	#if edge case => select edge case
+	#if not randomly select a 

@@ -1,60 +1,180 @@
 import random
-import string
 import unittest
+from credit_card_validator import credit_card_validator
 
 
 class TestCase(unittest.TestCase):
-    def test1(self):
-        tests_to_generate = 100
+    pass
 
-        for i in range(tests_to_generate):
-            expected = True
-            # List of edge case lengths
-            edge_cases = [7, 8, 9, 20, 21]
-            # 50% chance of generating an edge case
+
+def get_digits(number):
+    """
+    This will create a list of numbers
+    :param number: number
+    :type number: string
+    :return: list of numbers
+    :rtype: list of ints
+    """
+    arr = [int(d) for d in str(number)]
+    return arr
+
+
+def get_luhn_digit(number):
+    """
+    This function will calculate the luhn number
+    :param number: credit card number
+    :type number: string
+    :return: luhn digit
+    :rtype: string
+    """
+    odd_digits = number[-1::-2]
+    even_digits = number[-2::-2]
+    even_digits = [int(digit) for digit in even_digits]
+
+    checksum = 0
+    for digit in odd_digits:
+        tmp = int(digit) * 2
+        checksum += sum(get_digits(str(tmp)))
+
+    checksum = checksum + sum(even_digits)
+
+    if checksum % 10 > 0:
+        return str(10 - checksum % 10)
+    else:
+        return 0
+
+
+def get_expected(card):
+    """
+    This will return what the expected result of the function
+    :param card: credit card number
+    :type card: string
+    :return: True/False
+    :rtype: boolean
+    """
+    mc_1 = [str(i) for i in range(51, 56)]
+    mc_2 = [str(i) for i in range(2221, 2721)]
+    visa = ["4"]
+    amex = ["34", "37"]
+
+    if type(card) == int:
+        return False
+    if len(card) == 0:
+        return False
+    luhn = get_luhn_digit(card[0:-1])
+    length = len(card)
+    if card[0] in visa and length == 16 and card[-1] == luhn:
+        return True
+    elif card[0:2] in amex and length == 15 and card[-1] == luhn:
+        return True
+    elif card[0:4] in mc_1 and length == 16 and card[-1] == luhn:
+        return True
+    elif card[0:2] in mc_2 and length == 16 and card[-1] == luhn:
+        return True
+    else:
+        return False
+
+
+def build_test_func(expected, test_case, func_under_test, message):
+    def test(self):
+        result = func_under_test(test_case)
+        self.assertEqual(expected, result,
+                         message.format(test_case, expected, result))
+    return test
+
+
+def generate_testcases(tests_to_generate=110000):
+    for i in range(0, tests_to_generate):
+        cards = {
+            "visa": {
+                "prefix": ["4"],
+                "edge_prefix": ["3", "4", "5"],
+                "length": 16,
+                "edge_length": [0, 15, 16, 17]
+            },
+            "mc": {
+                "prefix": ["51", "55", "2221", "2720"],
+                "edge_prefix": ["50", "51", "52", "54", "55", "56", "2220",
+                                "2221", "2222", "2719", "2720", "2721"],
+                "length": 16,
+                "edge_length": [0, 15, 16, 17]
+            },
+            "amex": {
+                "prefix": ["34", "37"],
+                "edge_prefix": ["33", "34", "35", "36", "37", "38"],
+                "length": 15,
+                "edge_length": [0, 14, 15, 16]
+            }
+        }
+
+        credit_card = ""
+        selection = ""
+        randErr = ""
+        # 50% chance of selecting a truly random card or a valid one
+        odds = random.randint(0, 1)
+        if odds == 1:
+            length = random.randint(0, 30)
+            credit_card = "".join(
+                str(random.randint(0, 9))
+                for i in range(length))
+        else:
+            selection = random.choice(list(cards.keys()))
             odds = random.randint(0, 1)
             if odds == 1:
-                length = random.choice(edge_cases)
+                randErr = True
             else:
-                # Random Length
+                randErr = False
+                prefix = random.choice(cards[selection]["prefix"])
+                length = cards[selection]["length"]
+                mid = "".join(
+                    str(random.randint(0, 9))
+                    for i in range(length - len(prefix) - 1))
+                odds = random.randint(0, 1)
+                if odds == 1:
+                    luhn = random.randint(0, 9)
+                else:
+                    luhn = get_luhn_digit(prefix + mid)
+                credit_card = prefix + mid + str(luhn)
+
+        if randErr:
+            odds = random.randint(0, 1)
+            if odds == 1:
                 length = random.randint(0, 30)
-            # Random number of lower case
-            low = random.randint(0, length)
-            # Random number of upper case
-            up = random.randint(0, length - low)
-            # Random number of numbers
-            dig = random.randint(0, length - low - up)
-            # Random number of symbols
-            sym = random.randint(0, length - low - up - dig)
-            # Determine final length of the string
-            length = low + up + dig + sym
-            # Set expected result based on specification
-            if length < 8 or length > 20:
-                expected = False
-            if low < 1 or up < 1 or dig < 1 or sym < 1:
-                expected = False
-            # Generate password
-            pwd = self.gen_pass(length, low, up, dig, sym)
-            # Generate failure message if check_pwd doesn't match expection
-            if check_pwd(pwd) != expected:
-                print('Failure: {} should be {}'.format(pwd, expected))
-        
-    def gen_pass(self, length=8, low=1, up=1, dig=1, sym=1, spa=False):
-        lower_case = string.ascii_lowercase
-        upper_case = string.ascii_upperacse
-        digits = string.digits
-        symbols = '~`!@#$%^&*()_+-='
-        all_pos = lower_case + upper_case + digits + symbols
+            else:
+                length = random.choice(cards[selection]["edge_length"])
+            prefix = random.choice(cards[selection]["edge_prefix"])
 
-        pwd = ''
-        pwd = pwd + ''.join(random.choice(lower_case) for i in range(low))
-        pwd = pwd + ''.join(random.choice(upper_case) for i in range(up))
-        pwd = pwd + ''.join(random.choice(digits) for i in range(dig))
-        pwd = pwd + ''.join(random.choice(symbols) for i in range(sym))
-        pwd = pwd + ''.join(random.choice(all_pos)
-                            for i in range(length - len(pwd)))
+            if length == 0:
+                credit_card = ""
+            elif length == 1:
+                credit_card = str(random.randint(0, 9))
+            else:
+                if len(prefix) > length:
+                    credit_card = "".join(
+                        str(random.randint(0, 9))
+                        for i in range(length - 1))
+                else:
+                    mid = "".join(
+                        str(random.randint(0, 9))
+                        for i in range(length - 1))
+                    credit_card = prefix + mid
 
-        return ''.join(random.sample(pwd, len(pwd)))
+                # 50% chance to generate the correct luhn
+                odds = random.randint(0, 1)
+                if odds == 1:
+                    luhn = random.randint(0, 9)
+                else:
+                    luhn = get_luhn_digit(credit_card)
+                credit_card = credit_card + str(luhn)
 
-    if __name__ == '__main__':
-        unittest.main()
+        expected = get_expected(credit_card)
+
+        message = "Test Case: {}, Expected: {}, Result: {}"
+        new_test = build_test_func(
+            expected, credit_card, credit_card_validator, message)
+        setattr(TestCase, 'test_{}'.format(credit_card), new_test)
+
+
+if __name__ == "__main__":
+    generate_testcases()
+    unittest.main()

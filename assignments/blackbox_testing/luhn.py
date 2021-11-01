@@ -33,7 +33,10 @@ def get_luhn_digit(number):
 
     checksum = checksum + sum(even_digits)
 
-    return str(10 - checksum % 10)
+    if checksum % 10 > 0:
+        return str(10 - checksum % 10)
+    else:
+        return 0
 
 
 def main():
